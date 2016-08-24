@@ -40,6 +40,7 @@ from leafletWriter import *
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+selectedLayerCombo = "None"
 projectInstance = QgsProject.instance()
 
 
@@ -172,6 +173,12 @@ class MainDialog(QDialog, Ui_MainDialog):
                 baseLayer.setDisabled(True)
             else:
                 baseLayer.setDisabled(False)
+
+    def saveLayerComboSettings(self, value):
+        global selectedLayerCombo
+        if selectedLayerCombo != "None":
+            selectedLayerCombo.setCustomProperty("qgis2web/Info popup content",
+                                                 value)
 
     def populate_layers_and_groups(self, dlg):
         """Populate layers on QGIS into our layers and group tree view."""
@@ -392,13 +399,6 @@ class MainDialog(QDialog, Ui_MainDialog):
 
     def closeEvent(self, event):
         self.saveParameters()
-        (layers, groups, popup, visible,
-         json, cluster) = self.getLayersAndGroups()
-        for layer, pop in zip(layers, popup):
-            attrDict = {}
-            for attr in pop:
-                attrDict['attr'] = pop[attr]
-                layer.setCustomProperty("qgis2web/popup/" + attr, pop[attr])
         QSettings().setValue("qgis2web/size", self.size())
         QSettings().setValue("qgis2web/pos", self.pos())
         event.accept()
@@ -481,11 +481,6 @@ class TreeLayerItem(QTreeWidgetItem):
                 self.attrWidget.addItem("no label")
                 self.attrWidget.addItem("inline label")
                 self.attrWidget.addItem("header label")
-                custProp = layer.customProperty("qgis2web/popup/" + option)
-                if (custProp != "" and custProp is not None):
-                    self.attrWidget.setCurrentIndex(
-                        self.attrWidget.findText(
-                            layer.customProperty("qgis2web/popup/" + option)))
                 self.attr.setText(1, option)
                 self.popupItem.addChild(self.attr)
                 tree.setItemWidget(self.attr, 2, self.attrWidget)
@@ -550,6 +545,10 @@ class TreeLayerItem(QTreeWidgetItem):
             return self.clusterCheck.isChecked()
         except:
             return False
+
+    def clickCombo(self):
+        global selectedLayerCombo
+        selectedLayerCombo = self.layer
 
     def changeVisible(self, isVisible):
         self.layer.setCustomProperty("qgis2web/Visible", isVisible)

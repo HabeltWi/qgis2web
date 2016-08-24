@@ -56,26 +56,44 @@ def writeOL(iface, layers, groups, popup, visible,
                                     settings, json, matchCRS, clustered, iface)
         jsAddress = '<script src="resources/polyfills.js"></script>'
         if settings["Data export"]["Mapping library location"] == "Local":
-            cssAddress = """<link rel="stylesheet" """
-            cssAddress += """href="./resources/ol.css" />"""
+            cssAddress = """"""
+            cssAddress += """"""
             jsAddress += """
         <script src="./resources/ol.js"></script>"""
         else:
             cssAddress = """<link rel="stylesheet" href="http://"""
-            cssAddress += """openlayers.org/en/v3.17.1/css/ol.css" />"""
+            cssAddress += """openlayers.org/en/v3.15.1/css/ol.css" />"""
             jsAddress += """
-        <script src="http://openlayers.org/en/v3.17.1/"""
+        <script src="http://openlayers.org/en/v3.15.1/"""
             jsAddress += """build/ol.js"></script>"""
         jsAddress += """
         <script src="resources/OSMBuildings-OL3.js"></script>"""
         geojsonVars = ""
         wfsVars = ""
         styleVars = ""
+        vlString = """new ol.layer.VectorTile({
+                        source: new ol.source.VectorTile({  format: new ol.format.MVT(),
+                                                            tileGrid: ol.tilegrid.createXYZ({maxZoom: 22}),
+                                                            tilePixelRatio: 16,
+                                                            url: 'http://127.0.0.1:6767/%s/{z}/{x}/{y}.pbf'
+                                                        })
+                       
+                        }),"""
+        ol3popup = """<script>
+                var map = new ol.Map({
+                    layers: [
+                   
+                        
+                    
+   
+                   
+                    
+                  """
         for layer, encode2json in zip(layers, json):
             if layer.type() == layer.VectorLayer:
                 if layer.providerType() != "WFS" or encode2json:
-                    geojsonVars += ('<script src="layers/%s"></script>' %
-                                    (safeName(layer.name()) + ".js"))
+                    
+                    ol3popup += vlString  % safeName(layer.name())
                 else:
                     layerSource = layer.source()
                     if "retrictToRequestBBOX" in layerSource:
@@ -99,6 +117,7 @@ def writeOL(iface, layers, groups, popup, visible,
                     wfsVars += ('<script src="%s"></script>' % layerSource)
                 styleVars += ('<script src="styles/%s_style.js"></script>' %
                               (safeName(layer.name())))
+
         popupLayers = "popupLayers = [%s];" % ",".join(
                 ['1' for field in popup])
         controls = ['expandedAttribution']
@@ -115,8 +134,8 @@ def writeOL(iface, layers, groups, popup, visible,
             controls.append(
                 'new geolocateControl()')
         pageTitle = project.title()
-        mapSettings = iface.mapCanvas().mapSettings()
-        backgroundColor = """
+        mapSettings = iface.mapCanvas().mapSettings() #sets bgColor
+        backgroundColor = """ 
         <style>
         html, body {{
             background-color: {bgcol};
@@ -179,10 +198,20 @@ def writeOL(iface, layers, groups, popup, visible,
             extracss += """font-awesome/4.6.3/css/font-awesome.min.css">"""
         ol3layerswitcher = """
         <script src="./resources/ol3-layerswitcher.js"></script>"""
-        ol3popup = """<div id="popup" class="ol-popup">
+        ol3popup = ol3popup[:-1]
+        ol3popup += """  ],
+                    target: 'map',
+                    view: new ol.View({
+                    center: [0, 0],
+                    zoom: 2
+                    })
+                });
+
+            </script><div id="popup" class="ol-popup">
                 <a href="#" id="popup-closer" class="ol-popup-closer"></a>
                 <div id="popup-content"></div>
             </div>"""
+        
         ol3qgis2webjs = """<script src="./resources/qgis2web.js"></script>
         <script src="./resources/Autolinker.min.js"></script>"""
         if osmb != "":
@@ -200,14 +229,11 @@ def writeOL(iface, layers, groups, popup, visible,
                   "@OL3_STYLEVARS@": styleVars,
                   "@OL3_BACKGROUNDCOLOR@": backgroundColor,
                   "@OL3_POPUP@": ol3popup,
-                  "@OL3_GEOJSONVARS@": geojsonVars,
                   "@OL3_WFSVARS@": wfsVars,
                   "@OL3_PROJ4@": proj4,
                   "@OL3_PROJDEF@": projdef,
                   "@OL3_GEOCODINGLINKS@": geocodingLinks,
-                  "@QGIS2WEBJS@": ol3qgis2webjs,
                   "@OL3_LAYERSWITCHER@": ol3layerswitcher,
-                  "@OL3_LAYERS@": ol3layers,
                   "@OL3_MEASURESTYLE@": measureStyle,
                   "@LEAFLET_ADDRESSCSS@": "",
                   "@LEAFLET_MEASURECSS@": "",
