@@ -34,7 +34,7 @@ from basemaps import basemapOL
 
 
 def writeOL(iface, layers, groups, popup, visible,
-            json, clustered, settings, folder):
+            json, clustered, settings, folder,  server):
     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
     stamp = time.strftime("%Y_%m_%d-%H_%M_%S")
     folder = os.path.join(folder, 'qgis2web_' + unicode(stamp))
@@ -75,25 +75,27 @@ def writeOL(iface, layers, groups, popup, visible,
                         source: new ol.source.VectorTile({  format: new ol.format.MVT(),
                                                             tileGrid: ol.tilegrid.createXYZ({maxZoom: 22}),
                                                             tilePixelRatio: 16,
-                                                            url: 'http://127.0.0.1:6767/%s/{z}/{x}/{y}.pbf'
+                                                            url: '%s/%s/{z}/{x}/{y}.pbf'
                                                         })
                        
                         }),"""
-        ol3popup = """<script>
-                var map = new ol.Map({
-                    layers: [
-                   
-                        
-                    
-   
-                   
-                    
-                  """
+        ol3popup = """<script>var map = new ol.Map({layers: [ """
+        ol3layers = ""
+        ol3qgis2webjs = ""
         for layer, encode2json in zip(layers, json):
             if layer.type() == layer.VectorLayer:
                 if layer.providerType() != "WFS" or encode2json:
-                    
-                    ol3popup += vlString  % safeName(layer.name())
+                    if server != "":
+                        ol3popup += vlString  % (server,  safeName(layer.name()))
+                    else:
+                        geojsonVars += ('<script src="layers/%s"></script>' %
+                                    (safeName(layer.name()) + ".js"))
+                        ol3layers = """<script src="./layers/layers.js" type="text/javascript"></script>"""
+                        ol3qgis2webjs = """<script src="./resources/qgis2web.js"></script>
+                        <script src="./resources/Autolinker.min.js"></script>"""
+                        if osmb != "":
+                            ol3qgis2webjs += """
+                            <script>{osmb}</script>""".format(osmb=osmb)
                 else:
                     layerSource = layer.source()
                     if "retrictToRequestBBOX" in layerSource:
@@ -205,20 +207,17 @@ def writeOL(iface, layers, groups, popup, visible,
                     center: [0, 0],
                     zoom: 2
                     })
-                });
+                });</script>"""
 
-            </script><div id="popup" class="ol-popup">
+        if server == "":
+            ol3popup = ""
+        ol3popup += """    <div id="popup" class="ol-popup">
                 <a href="#" id="popup-closer" class="ol-popup-closer"></a>
                 <div id="popup-content"></div>
             </div>"""
         
-        ol3qgis2webjs = """<script src="./resources/qgis2web.js"></script>
-        <script src="./resources/Autolinker.min.js"></script>"""
-        if osmb != "":
-            ol3qgis2webjs += """
-        <script>{osmb}</script>""".format(osmb=osmb)
-        ol3layers = """
-        <script src="./layers/layers.js" type="text/javascript"></script>"""
+        
+       
         mapSize = iface.mapCanvas().size()
         values = {"@PAGETITLE@": pageTitle,
                   "@CSSADDRESS@": cssAddress,
@@ -229,11 +228,14 @@ def writeOL(iface, layers, groups, popup, visible,
                   "@OL3_STYLEVARS@": styleVars,
                   "@OL3_BACKGROUNDCOLOR@": backgroundColor,
                   "@OL3_POPUP@": ol3popup,
+                  "@OL3_GEOJSONVARS@": geojsonVars, 
                   "@OL3_WFSVARS@": wfsVars,
                   "@OL3_PROJ4@": proj4,
                   "@OL3_PROJDEF@": projdef,
                   "@OL3_GEOCODINGLINKS@": geocodingLinks,
+                  "@QGIS2WEBJS@": ol3qgis2webjs, 
                   "@OL3_LAYERSWITCHER@": ol3layerswitcher,
+                  "@OL3_LAYERS@": ol3layers, 
                   "@OL3_MEASURESTYLE@": measureStyle,
                   "@LEAFLET_ADDRESSCSS@": "",
                   "@LEAFLET_MEASURECSS@": "",

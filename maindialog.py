@@ -87,6 +87,9 @@ class MainDialog(QDialog, Ui_MainDialog):
         self.verticalLayout_2.insertWidget(1, self.devConsole)
         self.filter = devToggleFilter()
         self.installEventFilter(self.filter)
+        self.lineEdit.textChanged.connect(self.previewMap)
+        self.vecTileServ_RButton.clicked.connect(self.selectedVectorTiles)
+        self.genJSON_RButton.clicked.connect(self.selectedJSON)
 
     def changeFormat(self):
         global projectInstance
@@ -94,7 +97,17 @@ class MainDialog(QDialog, Ui_MainDialog):
                                    self.mapFormat.checkedButton().text())
         self.previewMap()
         self.toggleOptions()
+        
+        
+    def selectedVectorTiles(self):
+        self.lineEdit.setEnabled(True)
 
+        
+    def selectedJSON(self):
+        self.lineEdit.setEnabled(False)
+        self.lineEdit.clear()
+        
+    
     def toggleOptions(self):
         for param, value in specificParams.iteritems():
             treeParam = self.paramsTreeOL.findItems(param,
@@ -295,8 +308,11 @@ class MainDialog(QDialog, Ui_MainDialog):
         (layers, groups, popup, visible,
          json, cluster) = self.getLayersAndGroups()
         params = self.getParameters()
+        #
+        server = self.lineEdit.text()
+        #
         previewFile = writeOL(self.iface, layers, groups, popup, visible, json,
-                              cluster, params, utils.tempFolder())
+                              cluster, params, utils.tempFolder(),  server)
         self.preview.setUrl(QUrl.fromLocalFile(previewFile))
 
     def previewLeaflet(self):
@@ -311,11 +327,14 @@ class MainDialog(QDialog, Ui_MainDialog):
     def saveOL(self):
         params = self.getParameters()
         folder = params["Data export"]["Export folder"]
+        #
+        server = self.lineEdit.text()
+        #
         if folder:
             (layers, groups, popup, visible,
              json, cluster) = self.getLayersAndGroups()
             outputFile = writeOL(self.iface, layers, groups, popup, visible,
-                                 json, cluster, params, folder)
+                                 json, cluster, params, folder,  server)
             if (not os.environ.get('CI') and
                     not os.environ.get('TRAVIS')):
                 webbrowser.open_new_tab(outputFile)
