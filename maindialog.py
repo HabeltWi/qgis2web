@@ -90,7 +90,8 @@ class MainDialog(QDialog, Ui_MainDialog):
         self.lineEdit.textChanged.connect(self.previewMap)
         self.vecTileServ_RButton.clicked.connect(self.selectedVectorTiles)
         self.genJSON_RButton.clicked.connect(self.selectedJSON)
-
+        self.genJSON_RButton.setChecked(True)
+        self.lineEdit.setEnabled(False)
     def changeFormat(self):
         global projectInstance
         projectInstance.writeEntry("qgis2web", "mapFormat",
@@ -101,7 +102,7 @@ class MainDialog(QDialog, Ui_MainDialog):
         
     def selectedVectorTiles(self):
         self.lineEdit.setEnabled(True)
-
+        
         
     def selectedJSON(self):
         self.lineEdit.setEnabled(False)
