@@ -6,8 +6,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt4 import QtCore, QtGui,  QtWebKit
-import resources_rc
+from PyQt4 import QtCore, QtGui
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -54,6 +53,9 @@ class Ui_MainDialog(object):
         self.vecTileServ_RButton = QtGui.QRadioButton(self.tab)
         self.vecTileServ_RButton.setObjectName(_fromUtf8("vecTileServ_RButton"))
         self.serviceSelector.addWidget(self.vecTileServ_RButton)
+        self.label = QtGui.QLabel(self.tab)
+        self.label.setObjectName(_fromUtf8("label"))
+        self.serviceSelector.addWidget(self.label)
         self.lineEdit = QtGui.QLineEdit(self.tab)
         self.lineEdit.setObjectName(_fromUtf8("lineEdit"))
         self.serviceSelector.addWidget(self.lineEdit)
@@ -172,6 +174,7 @@ class Ui_MainDialog(object):
         MainDialog.setWindowTitle(_translate("MainDialog", "Export to web map", None))
         self.genJSON_RButton.setText(_translate("MainDialog", "Generate JSON", None))
         self.vecTileServ_RButton.setText(_translate("MainDialog", "Vector Tile Service", None))
+        self.label.setText(_translate("MainDialog", "Url:", None))
         self.layersTree.headerItem().setText(1, _translate("MainDialog", "2", None))
         self.paramsTreeOL.headerItem().setText(0, _translate("MainDialog", "Setting", None))
         self.paramsTreeOL.headerItem().setText(1, _translate("MainDialog", "Value", None))
@@ -182,4 +185,15 @@ class Ui_MainDialog(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainDialog", "Export", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainDialog", "Help", None))
 
+from PyQt4 import QtWebKit
+import resources_rc
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    MainDialog = QtGui.QDialog()
+    ui = Ui_MainDialog()
+    ui.setupUi(MainDialog)
+    MainDialog.show()
+    sys.exit(app.exec_())
 
