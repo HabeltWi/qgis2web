@@ -87,7 +87,6 @@ class MainDialog(QDialog, Ui_MainDialog):
         self.verticalLayout_2.insertWidget(1, self.devConsole)
         self.filter = devToggleFilter()
         self.installEventFilter(self.filter)
-        self.lineEdit.textChanged.connect(self.previewMap)
         self.vecTileServ_RButton.clicked.connect(self.selectedVectorTiles)
         self.genJSON_RButton.clicked.connect(self.selectedJSON)
         self.genJSON_RButton.setChecked(True)

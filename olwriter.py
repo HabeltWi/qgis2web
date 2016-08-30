@@ -738,12 +738,12 @@ def exportStyles(layers, folder, clustered,  server):
                     classAttr = "q2wHide_" + classAttr
                 value = ('var value = feature.get("%s");' % classAttr)
                 style = '''var style = %(v)s[0][2];
-    for (i = 0; i < %(v)s.length; i++){
-        var range = %(v)s[i];
-        if (value > range[0] && value<=range[1]){
-            style =  range[2];
-        }
-    }''' % {"v": varName}
+        for (i = 0; i < %(v)s.length; i++){
+            var range = %(v)s[i];
+            if (value > range[0] && value<=range[1]){
+                style =  range[2];
+            }
+        }''' % {"v": varName}
             else:
                 style = ""
             if layer.customProperty("labeling/fontSize"):
@@ -770,74 +770,116 @@ def exportStyles(layers, folder, clustered,  server):
               }),""" % (bufferColor, bufferWidth)
             else:
                 stroke = ""
+           
+            
+               
             if style != "":
                 if server == "":
                     style = '''function(feature, resolution){
-        %(value)s
-        %(style)s;
-        if (%(label)s !== null) {
-            var labelText = String(%(label)s);
-        } else {
-            var labelText = ""
-        }
-        var key = value + "_" + labelText
+                    %(value)s
+                    %(style)s;
+                    if (%(label)s !== null) {
+                        var labelText = String(%(label)s);
+                    } else {
+                        var labelText = ""
+                    }
+                    var key = value + "_" + labelText
 
-        if (!%(cache)s[key]){
-            var text = new ol.style.Text({
-                  font: '%(size)spx \\'%(face)s\\', sans-serif',
-                  text: labelText,
-                  textBaseline: "center",
-                  textAlign: "left",
-                  offsetX: 5,
-                  offsetY: 3,
-                  fill: new ol.style.Fill({
-                    color: "%(color)s"
-                  }),%(stroke)s
-                });
-            %(cache)s[key] = new ol.style.Style({"text": text})
-        }
-        var allStyles = [%(cache)s[key]];
-        allStyles.push.apply(allStyles, style);
-        return allStyles;
-    }''' % {
-                        "style": style, "label": labelText,
-                        "cache": "styleCache_" + safeName(layer.name()),
-                        "size": size, "face": face, "color": color,
-                        "stroke": stroke, "value": value}
-               
+                    if (!%(cache)s[key]){
+                        var text = new ol.style.Text({
+                              font: '%(size)spx \\'%(face)s\\', sans-serif',
+                              text: labelText,
+                              textBaseline: "center",
+                              textAlign: "left",
+                              offsetX: 5,
+                              offsetY: 3,
+                              fill: new ol.style.Fill({
+                                color: "%(color)s"
+                              }),%(stroke)s
+                            });
+                        %(cache)s[key] = new ol.style.Style({"text": text})
+                    }
+                    var allStyles = [%(cache)s[key]];
+                    allStyles.push.apply(allStyles, style);
+                    return allStyles;
+                    }''' % {
+                                    "style": style, "label": labelText,
+                                    "cache": "styleCache_" + safeName(layer.name()),
+                                    "size": size, "face": face, "color": color,
+                                    "stroke": stroke, "value": value}
+                
+                
                 else:
-                    style = '''function(feature, resolution){
-            %(value)s
-            %(style)s;
-            if (%(label)s !== null) {
-                var labelText = String(%(label)s);
-            } else {
-                var labelText = ""
-            }
-            var key = value + "_" + labelText
+                    iter = layer.getFeatures()
+                    for feature in iter:
+                        geom = feature.geometry()
+                    if (geom.type() == QGis.Point):
+                        style = '''function(feature, resolution){
+                        %(value)s
+                        %(style)s;
+                        if (typeof %(label)s !== 'undefined' && %(label)s !== null) {
+                            var labelText = String(%(label)s);
+                        } else {
+                        var labelText = ""
+                        }
+                        var key = value + "_" + labelText
 
-            if (!%(cache)s[key]){
-                var text = new ol.style.Text({
-                      font: '%(size)spx \\'%(face)s\\', sans-serif',
-                      text: labelText,
-                      textBaseline: "center",
-                      textAlign: "left",
-                      offsetX: 5,
-                      offsetY: 3,
-                      fill: new ol.style.Fill({
-                        color: "%(color)s"
-                      }),%(stroke)s
-                    });
-                %(cache)s[key] = new ol.style.Style({"text": text})
-            }
-            var allStyles = [%(cache)s[key]];
-            allStyles.push.apply(allStyles, style);
-            return style;
-        }''' % {
-                            "style": style, "label": labelText,
-                            "cache": "styleCache_" + safeName(layer.name()),
-                            "size": size, "face": face, "color": color,
-                            "stroke": stroke, "value": value}
+                        if (!%(cache)s[key]){
+                            var text = new ol.style.Text({
+                                  font: '%(size)spx \\'%(face)s\\', sans-serif',
+                                  text: labelText,
+                                  textBaseline: "center",
+                                  textAlign: "left",
+                                  offsetX: 5,
+                                  offsetY: 3,
+                                  fill: new ol.style.Fill({
+                                    color: "%(color)s"
+                                  }),%(stroke)s
+                                });
+                            %(cache)s[key] = new ol.style.Style({"text": text})
+                        }
+                        var allStyles = [%(cache)s[key]];
+                        allStyles.push.apply(allStyles, style);
+                        return allStyles;
+                    }''' % {
+                                        "style": style, "label": labelText,
+                                        "cache": "styleCache_" + safeName(layer.name()),
+                                        "size": size, "face": face, "color": color,
+                                        "stroke": stroke, "value": value}
+                    else: 
+                        style = '''function(feature, resolution){
+                        %(value)s
+                        %(style)s;
+                        if (typeof %(label)s !== 'undefined' && %(label)s !== null) {
+                            var labelText = String(%(label)s);
+                        } else {
+                        var labelText = ""
+                        }
+                        var key = value + "_" + labelText
+
+                        if (!%(cache)s[key]){
+                            var text = new ol.style.Text({
+                                  font: '%(size)spx \\'%(face)s\\', sans-serif',
+                                  text: labelText,
+                                  textBaseline: "center",
+                                  textAlign: "left",
+                                  offsetX: 5,
+                                  offsetY: 3,
+                                  fill: new ol.style.Fill({
+                                    color: "%(color)s"
+                                  }),%(stroke)s
+                                });
+                            %(cache)s[key] = new ol.style.Style({"text": text})
+                        }
+                        var allStyles = [%(cache)s[key]];
+                        allStyles.push.apply(allStyles, style);
+                        return style;
+                    }''' % {
+                                        "style": style, "label": labelText,
+                                        "cache": "styleCache_" + safeName(layer.name()),
+                                        "size": size, "face": face, "color": color,
+                                        "stroke": stroke, "value": value}
+
             else:
                 style = "''"
         except Exception, e:
