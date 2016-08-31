@@ -93,6 +93,10 @@ class MainDialog(QDialog, Ui_MainDialog):
         self.lineEdit.setEnabled(False)
 
     def changeFormat(self):
+        if self.mapFormat.checkedButton().text() == "OpenLayers 3":
+            self.vecTileServ_RButton.setEnabled(True)
+        else:
+            self.vecTileServ_RButton.setEnabled(False)
         global projectInstance
         projectInstance.writeEntry("qgis2web", "mapFormat",
                                    self.mapFormat.checkedButton().text())
