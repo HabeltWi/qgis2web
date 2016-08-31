@@ -87,16 +87,16 @@ class MainDialog(QDialog, Ui_MainDialog):
         self.verticalLayout_2.insertWidget(1, self.devConsole)
         self.filter = devToggleFilter()
         self.installEventFilter(self.filter)
-        self.vecTileServ_RButton.clicked.connect(self.selectedVectorTiles)
-        self.genJSON_RButton.clicked.connect(self.selectedJSON)
-        self.genJSON_RButton.setChecked(True)
+        self.vecTileServ.clicked.connect(self.selectedVectorTiles)
+        self.genJSON.clicked.connect(self.selectedJSON)
+        self.genJSON.setChecked(True)
         self.lineEdit.setEnabled(False)
 
     def changeFormat(self):
         if self.mapFormat.checkedButton().text() == "OpenLayers 3":
-            self.vecTileServ_RButton.setEnabled(True)
+            self.vecTileServ.setEnabled(True)
         else:
-            self.vecTileServ_RButton.setEnabled(False)
+            self.vecTileServ.setEnabled(False)
         global projectInstance
         projectInstance.writeEntry("qgis2web", "mapFormat",
                                    self.mapFormat.checkedButton().text())
@@ -117,13 +117,13 @@ class MainDialog(QDialog, Ui_MainDialog):
                                                     (Qt.MatchExactly |
                                                      Qt.MatchRecursive))[0]
             if self.mapFormat.checkedButton().text() == "OpenLayers 3":
-                self.vecTileServ_RButton.setDisabled(False)
+                self.vecTileServ.setDisabled(False)
                 if value == "OL3":
                     treeParam.setDisabled(False)
                 else:
                     treeParam.setDisabled(True)
             else:
-                self.vecTileServ_RButton.setDisabled(True)
+                self.vecTileServ.setDisabled(True)
                 if value == "OL3":
                     treeParam.setDisabled(True)
                 else:
@@ -314,7 +314,7 @@ class MainDialog(QDialog, Ui_MainDialog):
         (layers, groups, popup, visible,
          json, cluster) = self.getLayersAndGroups()
         params = self.getParameters()
-        if self.vecTileServ_RButton.isChecked():
+        if self.vecTileServ.isChecked():
             mvtserver = self.lineEdit.text()
 
         previewFile = writeOL(self.iface, layers, groups, popup, visible, json,
@@ -334,7 +334,7 @@ class MainDialog(QDialog, Ui_MainDialog):
         mvtserver = None
         params = self.getParameters()
         folder = params["Data export"]["Export folder"]
-        if self.vecTileServ_RButton.isChecked():
+        if self.vecTileServ.isChecked():
             mvtserver = self.lineEdit.text()
 
         if folder:

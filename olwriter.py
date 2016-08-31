@@ -34,7 +34,7 @@ from basemaps import basemapOL
 
 
 def writeOL(iface, layers, groups, popup, visible,
-            json, clustered, settings, folder,  server):
+            json, clustered, settings, folder,  mvtserver):
     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
     stamp = time.strftime("%Y_%m_%d-%H_%M_%S")
     folder = os.path.join(folder, 'qgis2web_' + unicode(stamp))
@@ -51,10 +51,10 @@ def writeOL(iface, layers, groups, popup, visible,
         optimize = settings["Data export"]["Minify GeoJSON files"]
         exportLayers(iface, layers, folder, precision,
                      optimize, popup, json)
-        exportStyles(layers, folder, clustered,  server)
+        exportStyles(layers, folder, clustered,  mvtserver)
         osmb = writeLayersAndGroups(layers, groups, visible, folder, popup,
                                     settings, json, matchCRS, clustered, iface,
-                                    server)
+                                    mvtserver)
         jsAddress = '<script src="resources/polyfills.js"></script>'
         if settings["Data export"]["Mapping library location"] == "Local":
             cssAddress = """<link rel="stylesheet" href="http://"""
@@ -90,7 +90,7 @@ def writeOL(iface, layers, groups, popup, visible,
         for layer, encode2json in zip(layers, json):
             if layer.type() == layer.VectorLayer:
                 if layer.providerType() != "WFS" or encode2json:
-                    if server is not None:
+                    if mvtserver is not None:
                         onloadmp = """onload = "mapinit()" """
                     else:
                         geojsonVars += ('<script src="layers/%s"></script>' %
@@ -212,7 +212,7 @@ def writeOL(iface, layers, groups, popup, visible,
                 <a href="#" id="popup-closer" class="ol-popup-closer"></a>
                 <div id="popup-content"></div>
             </div>"""
-        if server is not None:
+        if mvtserver is not None:
             ol3popup = """"""
 
         mapSize = iface.mapCanvas().size()
@@ -652,7 +652,7 @@ jsonSource_%(n)s.addFeatures(features_%(n)s);''' % {"n": layerName,
                                   "row": provider.ySize()}
 
 
-def exportStyles(layers, folder, clustered,  server):
+def exportStyles(layers, folder, clustered,  mvtserver):
     stylesFolder = os.path.join(folder, "styles")
     QDir().mkpath(stylesFolder)
     for layer, cluster in zip(layers, clustered):

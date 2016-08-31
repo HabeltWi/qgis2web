@@ -42,7 +42,7 @@
          <item row="0" column="0">
           <layout class="QHBoxLayout" name="serviceSelector">
            <item>
-            <widget class="QRadioButton" name="genJSON_RButton">
+            <widget class="QRadioButton" name="genJSON">
              <property name="text">
               <string>Generate JSON</string>
              </property>
@@ -52,7 +52,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QRadioButton" name="vecTileServ_RButton">
+            <widget class="QRadioButton" name="vecTileServ">
              <property name="text">
               <string>Vector Tile Service</string>
              </property>
