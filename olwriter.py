@@ -53,11 +53,12 @@ def writeOL(iface, layers, groups, popup, visible,
                      optimize, popup, json)
         exportStyles(layers, folder, clustered,  server)
         osmb = writeLayersAndGroups(layers, groups, visible, folder, popup,
-                                    settings, json, matchCRS, clustered, iface,  server)
+                                    settings, json, matchCRS, clustered, iface,
+                                    server)
         jsAddress = '<script src="resources/polyfills.js"></script>'
         if settings["Data export"]["Mapping library location"] == "Local":
-            cssAddress = """"""
-            cssAddress += """"""
+            cssAddress = """<link rel="stylesheet" href="http://"""
+            cssAddress += """openlayers.org/en/v3.17.1/css/ol.css" />"""
             jsAddress += """
         <script src="./resources/ol.js"></script>"""
         else:
@@ -71,30 +72,34 @@ def writeOL(iface, layers, groups, popup, visible,
         geojsonVars = ""
         wfsVars = ""
         styleVars = ""
-        vlString = """new ol.layer.VectorTile({
-                        source: new ol.source.VectorTile({  format: new ol.format.MVT(),
-                                                            tileGrid: ol.tilegrid.createXYZ({maxZoom: 22}),
-                                                            tilePixelRatio: 16,
-                                                            url: '%s/%s/{z}/{x}/{y}.pbf'
-                                                        }),
-                        style: style_%s
-                        }),"""
+        vlString = """
+        new ol.layer.VectorTile({
+        source: new ol.source.VectorTile
+        ({  format: new ol.format.MVT(),
+            tileGrid: ol.tilegrid.createXYZ({maxZoom: 22}),
+            tilePixelRatio: 16,
+            url: '%s/%s/{z}/{x}/{y}.pbf'
+        }),
+        style: style_%s
+        }),"""
         ol3popup = """"""
-        ol3layers = """<script src="./layers/layers.js" type="text/javascript"></script>"""
+        ol3layers = """
+        <script src="./layers/layers.js" type="text/javascript"></script>"""
         ol3qgis2webjs = ""
         onloadmp = ""
         for layer, encode2json in zip(layers, json):
             if layer.type() == layer.VectorLayer:
                 if layer.providerType() != "WFS" or encode2json:
-                    if server != "":
-                        #ol3popup += vlString  % (server,  safeName(layer.name()),  safeName(layer.name()))
+                    if server is not None:
                         onloadmp = """onload = "mapinit()" """
                     else:
                         geojsonVars += ('<script src="layers/%s"></script>' %
-                                    (safeName(layer.name()) + ".js"))
-                        
-                        ol3qgis2webjs = """<script src="./resources/qgis2web.js"></script>
-                        <script src="./resources/Autolinker.min.js"></script>"""
+                                        (safeName(layer.name()) + ".js"))
+
+                        ol3qgis2webjs = """
+                        <script src="./resources/qgis2web.js"></script>
+                        <script src="./resources/Autolinker.min.js">
+                        </script>"""
                         if osmb != "":
                             ol3qgis2webjs += """
                             <script>{osmb}</script>""".format(osmb=osmb)
@@ -123,7 +128,7 @@ def writeOL(iface, layers, groups, popup, visible,
                               (safeName(layer.name())))
 
         popupLayers = "popupLayers = [%s];" % ",".join(
-                ['1' for field in popup])
+            ['1' for field in popup])
         controls = ['expandedAttribution']
         project = QgsProject.instance()
         if project.readBoolEntry("ScaleBar", "/Enabled", False)[0]:
@@ -138,8 +143,8 @@ def writeOL(iface, layers, groups, popup, visible,
             controls.append(
                 'new geolocateControl()')
         pageTitle = project.title()
-        mapSettings = iface.mapCanvas().mapSettings() #sets bgColor
-        backgroundColor = """ 
+        mapSettings = iface.mapCanvas().mapSettings()  # sets bgColor
+        backgroundColor = """
         <style>
         html, body {{
             background-color: {bgcol};
@@ -202,20 +207,14 @@ def writeOL(iface, layers, groups, popup, visible,
             extracss += """font-awesome/4.6.3/css/font-awesome.min.css">"""
         ol3layerswitcher = """
         <script src="./resources/ol3-layerswitcher.js"></script>"""
-       
-        
 
-
-            
         ol3popup = """    <div id="popup" class="ol-popup">
                 <a href="#" id="popup-closer" class="ol-popup-closer"></a>
                 <div id="popup-content"></div>
             </div>"""
-        if server != "":
+        if server is not None:
             ol3popup = """"""
-            
-        
-       
+
         mapSize = iface.mapCanvas().size()
         values = {"@PAGETITLE@": pageTitle,
                   "@CSSADDRESS@": cssAddress,
@@ -226,16 +225,16 @@ def writeOL(iface, layers, groups, popup, visible,
                   "@OL3_STYLEVARS@": styleVars,
                   "@OL3_BACKGROUNDCOLOR@": backgroundColor,
                   "@OL3_POPUP@": ol3popup,
-                  "@OL3_GEOJSONVARS@": geojsonVars, 
+                  "@OL3_GEOJSONVARS@": geojsonVars,
                   "@OL3_WFSVARS@": wfsVars,
                   "@OL3_PROJ4@": proj4,
                   "@OL3_PROJDEF@": projdef,
                   "@OL3_GEOCODINGLINKS@": geocodingLinks,
-                  "@QGIS2WEBJS@": ol3qgis2webjs, 
+                  "@QGIS2WEBJS@": ol3qgis2webjs,
                   "@OL3_LAYERSWITCHER@": ol3layerswitcher,
-                  "@OL3_LAYERS@": ol3layers, 
+                  "@OL3_LAYERS@": ol3layers,
                   "@OL3_MEASURESTYLE@": measureStyle,
-                  "@JS_ONLOAD@": onloadmp, 
+                  "@JS_ONLOAD@": onloadmp,
                   "@LEAFLET_ADDRESSCSS@": "",
                   "@LEAFLET_MEASURECSS@": "",
                   "@LEAFLET_EXTRAJS@": "",
@@ -276,16 +275,19 @@ def writeOL(iface, layers, groups, popup, visible,
 
 
 def writeLayersAndGroups(layers, groups, visible, folder, popup,
-                         settings, json, matchCRS, clustered, iface,  server):
+                         settings, json, matchCRS, clustered, iface,
+                         mvtserver):
     mapgen = """function mapinit(){ var map = new ol.Map({layers: [ """
-    vlString = """new ol.layer.VectorTile({
-                        source: new ol.source.VectorTile({  format: new ol.format.MVT(),
-                                                            tileGrid: ol.tilegrid.createXYZ({maxZoom: 22}),
-                                                            tilePixelRatio: 16,
-                                                            url: '%s/%s/{z}/{x}/{y}.pbf'
-                                                        }),
-                        style: style_%s
-                        }),"""
+    vlString = """
+    new ol.layer.VectorTile({
+    source: new ol.source.VectorTile
+    ({  format: new ol.format.MVT(),
+        tileGrid: ol.tilegrid.createXYZ({maxZoom: 22}),
+        tilePixelRatio: 16,
+        url: '%s/%s/{z}/{x}/{y}.pbf'
+    }),
+    style: style_%s
+    }),"""
     mapfin = """ ],
                     target: 'map',
                     view: new ol.View({
@@ -294,113 +296,96 @@ def writeLayersAndGroups(layers, groups, visible, folder, popup,
                     })
                 });
                 }"""
-    if server != "":
-        for layer in layers:
-            mapgen += vlString % (server,  safeName(layer.name()),  safeName(layer.name()))
-        mapgen = mapgen[:-1]
-        mapgen += mapfin
-        path = os.path.join(folder, "layers", "layers.js")
-        with codecs.open(path, "w", "utf-8") as f:
-            f.write(mapgen)
-        return 0
-    
-    else:
-        canvas = iface.mapCanvas()
-        basemapList = settings["Appearance"]["Base layer"]
-        basemaps = [basemapOL()[item.text()] for _, item in enumerate(basemapList)]
 
-        baseLayer = """var baseLayer = new ol.layer.Group({
-        'title': 'Base maps',
-        layers: [%s\n]
-    });""" % ','.join(basemaps)
+    canvas = iface.mapCanvas()
+    basemapList = settings["Appearance"]["Base layer"]
+    basemaps = [basemapOL()[item.text()] for _, item in enumerate(basemapList)]
 
-        layerVars = ""
-        for layer, encode2json, cluster in zip(layers, json, clustered):
-            try:
-                if is25d(layer, canvas):
-                    pass
-                else:
-                    layerVars += "\n".join([layerToJavascript(iface, layer,
-                                                              encode2json,
-                                                              matchCRS, cluster)])
-            except:
+    baseLayer = """var baseLayer = new ol.layer.Group({
+    'title': 'Base maps',
+    layers: [%s\n]
+});""" % ','.join(basemaps)
+
+    vlBase = """%s\n""" % ','.join(basemaps)
+    layerVars = ""
+    for layer, encode2json, cluster in zip(layers, json, clustered):
+        try:
+            if is25d(layer, canvas):
+                pass
+            else:
                 layerVars += "\n".join([layerToJavascript(iface, layer,
-                                                          encode2json, matchCRS,
-                                                          cluster)])
-        groupVars = ""
-        groupedLayers = {}
-        for group, groupLayers in groups.iteritems():
-            groupVars += ('''var %s = new ol.layer.Group({
-                                    layers: [%s],
-                                    title: "%s"});\n''' %
-                          ("group_" + safeName(group),
-                           ",".join(["lyr_" + safeName(layer.name())
-                                    for layer in groupLayers]),
-                           group))
-            for layer in groupLayers:
-                groupedLayers[layer.id()] = safeName(group)
-        mapLayers = ["baseLayer"]
-        usedGroups = []
-        osmb = ""
-        for layer in layers:
-            try:
+                                                          encode2json,
+                                                          matchCRS, cluster)])
+        except:
+            layerVars += "\n".join([layerToJavascript(iface, layer,
+                                                      encode2json, matchCRS,
+                                                      cluster)])
+    groupVars = ""
+    groupedLayers = {}
+    for group, groupLayers in groups.iteritems():
+        groupVars += ('''var %s = new ol.layer.Group({
+                                layers: [%s],
+                                title: "%s"});\n''' %
+                      ("group_" + safeName(group),
+                       ",".join(["lyr_" + safeName(layer.name())
+                                for layer in groupLayers]),
+                       group))
+        for layer in groupLayers:
+            groupedLayers[layer.id()] = safeName(group)
+    mapLayers = ["baseLayer"]
+    usedGroups = []
+    osmb = ""
+    for layer in layers:
+        try:
+            renderer = layer.rendererV2()
+            if is25d(layer, canvas):
+                shadows = ""
                 renderer = layer.rendererV2()
-                if is25d(layer, canvas):
-                    shadows = ""
-                    renderer = layer.rendererV2()
-                    renderContext = QgsRenderContext.fromMapSettings(
-                            canvas.mapSettings())
-                    fields = layer.pendingFields()
-                    renderer.startRender(renderContext, fields)
-                    for feat in layer.getFeatures():
-                        if isinstance(renderer, QgsCategorizedSymbolRendererV2):
-                            classAttribute = renderer.classAttribute()
-                            attrValue = feat.attribute(classAttribute)
-                            catIndex = renderer.categoryIndexForValue(attrValue)
-                            categories = renderer.categories()
-                            symbol = categories[catIndex].symbol()
-                        elif isinstance(renderer, QgsGraduatedSymbolRendererV2):
-                            classAttribute = renderer.classAttribute()
-                            attrValue = feat.attribute(classAttribute)
-                            ranges = renderer.ranges()
-                            for range in ranges:
-                                if (attrValue >= range.lowerValue() and
-                                        attrValue <= range.upperValue()):
-                                    symbol = range.symbol().clone()
-                        else:
-                            symbol = renderer.symbolForFeature2(feat,
-                                                                renderContext)
-                        symbolLayer = symbol.symbolLayer(0)
-                        if not symbolLayer.paintEffect().effectList()[0].enabled():
-                            shadows = "'2015-07-15 10:00:00'"
-                    renderer.stopRender(renderContext)
-                    osmb = """
-    var osmb = new OSMBuildings(map).date(new Date({shadows}));
-    osmb.set(geojson_{sln});""".format(shadows=shadows, sln=safeName(layer.name()))
-                else:
-                    mapLayers.append("lyr_" + safeName(layer.name()))
-            except:
-                mapLayers.append("lyr_" + safeName(layer.name()))
-        visibility = ""
-        for layer, v in zip(mapLayers[1:], visible):
-            visibility += "\n".join(["%s.setVisible(%s);" % (layer,
-                                                             unicode(v).lower())])
-
-        group_list = ["baseLayer"] if len(basemapList) else []
-        no_group_list = []
-        for layer in layers:
-            try:
-                if is25d(layer, canvas):
-                    pass
-                else:
-                    if layer.id() in groupedLayers:
-                        groupName = groupedLayers[layer.id()]
-                        if groupName not in usedGroups:
-                            group_list.append("group_" + safeName(groupName))
-                            usedGroups.append(groupName)
+                renderContext = QgsRenderContext.fromMapSettings(
+                    canvas.mapSettings())
+                fields = layer.pendingFields()
+                renderer.startRender(renderContext, fields)
+                for feat in layer.getFeatures():
+                    if isinstance(renderer, QgsCategorizedSymbolRendererV2):
+                        classAttribute = renderer.classAttribute()
+                        attrValue = feat.attribute(classAttribute)
+                        catIndex = renderer.categoryIndexForValue(attrValue)
+                        categories = renderer.categories()
+                        symbol = categories[catIndex].symbol()
+                    elif isinstance(renderer, QgsGraduatedSymbolRendererV2):
+                        classAttribute = renderer.classAttribute()
+                        attrValue = feat.attribute(classAttribute)
+                        ranges = renderer.ranges()
+                        for range in ranges:
+                            if (attrValue >= range.lowerValue() and
+                                    attrValue <= range.upperValue()):
+                                symbol = range.symbol().clone()
                     else:
-                        no_group_list.append("lyr_" + safeName(layer.name()))
-            except:
+                        symbol = renderer.symbolForFeature2(feat,
+                                                            renderContext)
+                    symbolLayer = symbol.symbolLayer(0)
+                    if not symbolLayer.paintEffect().effectList()[0].enabled():
+                        shadows = "'2015-07-15 10:00:00'"
+                renderer.stopRender(renderContext)
+                osmb = """
+var osmb = new OSMBuildings(map).date(new Date({shadows}));
+osmb.set(geojson_{sln});""".format(shadows=shadows, sln=safeName(layer.name()))
+            else:
+                mapLayers.append("lyr_" + safeName(layer.name()))
+        except:
+            mapLayers.append("lyr_" + safeName(layer.name()))
+    visibility = ""
+    for layer, v in zip(mapLayers[1:], visible):
+        visibility += "\n".join(["%s.setVisible(%s);" % (layer,
+                                                         unicode(v).lower())])
+
+    group_list = ["baseLayer"] if len(basemapList) else []
+    no_group_list = []
+    for layer in layers:
+        try:
+            if is25d(layer, canvas):
+                pass
+            else:
                 if layer.id() in groupedLayers:
                     groupName = groupedLayers[layer.id()]
                     if groupName not in usedGroups:
@@ -408,55 +393,64 @@ def writeLayersAndGroups(layers, groups, visible, folder, popup,
                         usedGroups.append(groupName)
                 else:
                     no_group_list.append("lyr_" + safeName(layer.name()))
+        except:
+            if layer.id() in groupedLayers:
+                groupName = groupedLayers[layer.id()]
+                if groupName not in usedGroups:
+                    group_list.append("group_" + safeName(groupName))
+                    usedGroups.append(groupName)
+            else:
+                no_group_list.append("lyr_" + safeName(layer.name()))
 
-        layersList = []
-        for layer in (group_list + no_group_list):
-            layersList.append(layer)
-        layersListString = "var layersList = [" + ",".join(layersList) + "];"
+    layersList = []
+    for layer in (group_list + no_group_list):
+        layersList.append(layer)
+    layersListString = "var layersList = [" + ",".join(layersList) + "];"
 
-        fieldAliases = ""
-        fieldImages = ""
-        fieldLabels = ""
-        for layer, labels in zip(layers, popup):
-            if layer.type() == layer.VectorLayer:
-                fieldList = layer.pendingFields()
-                aliasFields = ""
-                imageFields = ""
-                labelFields = ""
-                for field, label in zip(labels.keys(), labels.values()):
-                    labelFields += "'%(field)s': '%(label)s', " % (
-                            {"field": field, "label": label})
-                labelFields = "{%(labelFields)s});\n" % (
-                        {"labelFields": labelFields})
-                labelFields = "lyr_%(name)s.set('fieldLabels', " % (
-                            {"name": safeName(layer.name())}) + labelFields
-                fieldLabels += labelFields
-                for f in fieldList:
-                    fieldIndex = fieldList.indexFromName(unicode(f.name()))
-                    aliasFields += "'%(field)s': '%(alias)s', " % (
-                            {"field": f.name(),
-                             "alias": layer.attributeDisplayName(fieldIndex)})
-                    try:
-                        widget = layer.editFormConfig().widgetType(fieldIndex)
-                    except:
-                        widget = layer.editorWidgetV2(fieldIndex)
-                    imageFields += "'%(field)s': '%(image)s', " % (
-                            {"field": f.name(),
-                             "image": widget})
-                aliasFields = "{%(aliasFields)s});\n" % (
-                            {"aliasFields": aliasFields})
-                aliasFields = "lyr_%(name)s.set('fieldAliases', " % (
-                            {"name": safeName(layer.name())}) + aliasFields
-                fieldAliases += aliasFields
-                imageFields = "{%(imageFields)s});\n" % (
-                            {"imageFields": imageFields})
-                imageFields = "lyr_%(name)s.set('fieldImages', " % (
-                            {"name": safeName(layer.name())}) + imageFields
-                fieldImages += imageFields
+    fieldAliases = ""
+    fieldImages = ""
+    fieldLabels = ""
+    for layer, labels in zip(layers, popup):
+        if layer.type() == layer.VectorLayer:
+            fieldList = layer.pendingFields()
+            aliasFields = ""
+            imageFields = ""
+            labelFields = ""
+            for field, label in zip(labels.keys(), labels.values()):
+                labelFields += "'%(field)s': '%(label)s', " % (
+                    {"field": field, "label": label})
+            labelFields = "{%(labelFields)s});\n" % (
+                {"labelFields": labelFields})
+            labelFields = "lyr_%(name)s.set('fieldLabels', " % (
+                {"name": safeName(layer.name())}) + labelFields
+            fieldLabels += labelFields
+            for f in fieldList:
+                fieldIndex = fieldList.indexFromName(unicode(f.name()))
+                aliasFields += "'%(field)s': '%(alias)s', " % (
+                    {"field": f.name(),
+                     "alias": layer.attributeDisplayName(fieldIndex)})
+                try:
+                    widget = layer.editFormConfig().widgetType(fieldIndex)
+                except:
+                    widget = layer.editorWidgetV2(fieldIndex)
+                imageFields += "'%(field)s': '%(image)s', " % (
+                    {"field": f.name(),
+                     "image": widget})
+            aliasFields = "{%(aliasFields)s});\n" % (
+                {"aliasFields": aliasFields})
+            aliasFields = "lyr_%(name)s.set('fieldAliases', " % (
+                {"name": safeName(layer.name())}) + aliasFields
+            fieldAliases += aliasFields
+            imageFields = "{%(imageFields)s});\n" % (
+                {"imageFields": imageFields})
+            imageFields = "lyr_%(name)s.set('fieldImages', " % (
+                {"name": safeName(layer.name())}) + imageFields
+            fieldImages += imageFields
 
-    # generates layers.js
-        path = os.path.join(folder, "layers", "layers.js")
-        with codecs.open(path, "w", "utf-8") as f:
+    path = os.path.join(folder, "layers", "layers.js")
+    with codecs.open(path, "w", "utf-8") as f:
+
+        if mvtserver is None:
             if basemapList:
                 f.write(baseLayer + "\n")
             f.write(layerVars + "\n")
@@ -466,6 +460,16 @@ def writeLayersAndGroups(layers, groups, visible, folder, popup,
             f.write(fieldAliases)
             f.write(fieldImages)
             f.write(fieldLabels)
+        else:
+            if basemapList:
+                mapgen += vlBase + "\n"
+            mapgen += ","
+            for layer in layers:
+                mapgen += vlString % (mvtserver,  safeName(layer.name()),
+                                      safeName(layer.name()))
+            mapgen = mapgen[:-1]
+            mapgen += mapfin
+            f.write(mapgen)
         return osmb
 
 
@@ -570,8 +574,8 @@ function get%(n)sJson(geojson) {
     var features_%(n)s = format_%(n)s.readFeatures(geojson);
     jsonSource_%(n)s.addFeatures(features_%(n)s);
 }''' % {
-                        "name": layer.name(), "n": layerName,
-                        "min": minResolution, "max": maxResolution}
+                "name": layer.name(), "n": layerName,
+                "min": minResolution, "max": maxResolution}
             return layerCode
         else:
             layerCode = '''var format_%(n)s = new ol.format.GeoJSON();
@@ -770,116 +774,47 @@ def exportStyles(layers, folder, clustered,  server):
               }),""" % (bufferColor, bufferWidth)
             else:
                 stroke = ""
-           
-            
-               
+
             if style != "":
-                if server == "":
-                    style = '''function(feature, resolution){
-                    %(value)s
-                    %(style)s;
-                    if (%(label)s !== null) {
-                        var labelText = String(%(label)s);
-                    } else {
-                        var labelText = ""
-                    }
-                    var key = value + "_" + labelText
+                style = '''function(feature, resolution){
+                %(value)s
+                %(style)s;
+                if (%(label)s !== null) {
+                    var labelText = String(%(label)s);
+                } else {
+                    var labelText = ""
+                }
+                var key = value + "_" + labelText
 
-                    if (!%(cache)s[key]){
-                        var text = new ol.style.Text({
-                              font: '%(size)spx \\'%(face)s\\', sans-serif',
-                              text: labelText,
-                              textBaseline: "center",
-                              textAlign: "left",
-                              offsetX: 5,
-                              offsetY: 3,
-                              fill: new ol.style.Fill({
-                                color: "%(color)s"
-                              }),%(stroke)s
-                            });
-                        %(cache)s[key] = new ol.style.Style({"text": text})
-                    }
-                    var allStyles = [%(cache)s[key]];
-                    allStyles.push.apply(allStyles, style);
-                    return allStyles;
-                    }''' % {
-                                    "style": style, "label": labelText,
-                                    "cache": "styleCache_" + safeName(layer.name()),
-                                    "size": size, "face": face, "color": color,
-                                    "stroke": stroke, "value": value}
-                
-                
+                if (!%(cache)s[key]){
+                    var text = new ol.style.Text({
+                          font: '%(size)spx \\'%(face)s\\', sans-serif',
+                          text: labelText,
+                          textBaseline: "center",
+                          textAlign: "left",
+                          offsetX: 5,
+                          offsetY: 3,
+                          fill: new ol.style.Fill({
+                            color: "%(color)s"
+                          }),%(stroke)s
+                        });
+                    %(cache)s[key] = new ol.style.Style({"text": text})
+                }
+                var allStyles = [%(cache)s[key]];
+                allStyles.push.apply(allStyles, style);
+                ''' % {
+                    "style": style, "label": labelText,
+                    "cache": "styleCache_" + safeName(layer.name()),
+                    "size": size, "face": face, "color": color,
+                    "stroke": stroke, "value": value}
+
+                iter = layer.getFeatures()
+                for feature in iter:
+                    geom = feature.geometry()
+                if (geom.type() != QGis.Point):
+                        style += '''return style;}'''
                 else:
-                    iter = layer.getFeatures()
-                    for feature in iter:
-                        geom = feature.geometry()
-                    if (geom.type() == QGis.Point):
-                        style = '''function(feature, resolution){
-                        %(value)s
-                        %(style)s;
-                        if (typeof %(label)s !== 'undefined' && %(label)s !== null) {
-                            var labelText = String(%(label)s);
-                        } else {
-                        var labelText = ""
-                        }
-                        var key = value + "_" + labelText
-
-                        if (!%(cache)s[key]){
-                            var text = new ol.style.Text({
-                                  font: '%(size)spx \\'%(face)s\\', sans-serif',
-                                  text: labelText,
-                                  textBaseline: "center",
-                                  textAlign: "left",
-                                  offsetX: 5,
-                                  offsetY: 3,
-                                  fill: new ol.style.Fill({
-                                    color: "%(color)s"
-                                  }),%(stroke)s
-                                });
-                            %(cache)s[key] = new ol.style.Style({"text": text})
-                        }
-                        var allStyles = [%(cache)s[key]];
-                        allStyles.push.apply(allStyles, style);
-                        return allStyles;
-                    }''' % {
-                                        "style": style, "label": labelText,
-                                        "cache": "styleCache_" + safeName(layer.name()),
-                                        "size": size, "face": face, "color": color,
-                                        "stroke": stroke, "value": value}
-                    else: 
-                        style = '''function(feature, resolution){
-                        %(value)s
-                        %(style)s;
-                        if (typeof %(label)s !== 'undefined' && %(label)s !== null) {
-                            var labelText = String(%(label)s);
-                        } else {
-                        var labelText = ""
-                        }
-                        var key = value + "_" + labelText
-
-                        if (!%(cache)s[key]){
-                            var text = new ol.style.Text({
-                                  font: '%(size)spx \\'%(face)s\\', sans-serif',
-                                  text: labelText,
-                                  textBaseline: "center",
-                                  textAlign: "left",
-                                  offsetX: 5,
-                                  offsetY: 3,
-                                  fill: new ol.style.Fill({
-                                    color: "%(color)s"
-                                  }),%(stroke)s
-                                });
-                            %(cache)s[key] = new ol.style.Style({"text": text})
-                        }
-                        var allStyles = [%(cache)s[key]];
-                        allStyles.push.apply(allStyles, style);
-                        return style;
-                    }''' % {
-                                        "style": style, "label": labelText,
-                                        "cache": "styleCache_" + safeName(layer.name()),
-                                        "size": size, "face": face, "color": color,
-                                        "stroke": stroke, "value": value}
-
+                    style += '''return allStyles;}'''
             else:
                 style = "''"
         except Exception, e:
@@ -907,7 +842,7 @@ def getSymbolAsStyle(symbol, stylesFolder, layer_transparency):
     if layer_transparency == 0:
         alpha = symbol.alpha()
     else:
-        alpha = 1-(layer_transparency / float(100))
+        alpha = 1 - (layer_transparency / float(100))
     for i in xrange(symbol.symbolLayerCount()):
         sl = symbol.symbolLayer(i)
         props = sl.properties()
@@ -1001,7 +936,7 @@ def getCircle(color, borderColor, borderWidth, size, props):
 def getIcon(path, size, svgWidth, svgHeight):
     size = math.floor(float(size) * 3.8)
     anchor = size / 2
-    scale = unicode(float(size)/float(svgWidth))
+    scale = unicode(float(size) / float(svgWidth))
     return '''new ol.style.Icon({
                   imgSize: [%(w)s, %(h)s],
                   scale: %(scale)s,

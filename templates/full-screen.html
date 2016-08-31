@@ -24,7 +24,7 @@
         @LEAFLET_CLUSTERJS@
         @OL3_GEOJSONVARS@
         @OL3_STYLEVARS@
-        @OL3_LAYERS@ 
+        @OL3_LAYERS@
         <style>
         html, body, #map {
             width: 100%;
@@ -35,9 +35,9 @@
         </style>
         <title>@PAGETITLE@</title>
     </head>
-    <body>
+    <body @JS_ONLOAD@>
         <div id="map">
-            @OL3_POPUP@
+        @OL3_POPUP@
         </div>
         @QGIS2WEBJS@
         @OL3_MEASURESTYLE@
